@@ -232,8 +232,23 @@
     color: var(--brown); margin-bottom: 8px; line-height: 1.2;
   }
   .detail-meta {
-    display: flex; flex-wrap: wrap; gap: 12px;
+    display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
     font-size: 14px; color: var(--brown-soft); margin-bottom: 18px;
+  }
+  .portion-switch {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--cream-soft); border-radius: 999px;
+    padding: 3px;
+  }
+  .portion-switch span { padding: 0 6px; font-size: 13px; }
+  .portion-switch button {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: none; background: transparent; color: var(--brown-soft);
+    font-family: 'Lora', serif; font-size: 14px; font-weight: 500;
+    cursor: pointer;
+  }
+  .portion-switch button.active {
+    background: var(--brown); color: var(--cream);
   }
   .detail-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
   .detail-tags .chip { cursor: default; font-size: 12px; padding: 4px 10px; }
@@ -280,6 +295,69 @@
     font-family: 'Caveat', cursive; font-size: 26px; color: var(--brown-soft);
     text-align: center; padding: 20px;
   }
+
+  /* OVERVIEW */
+  .overview {
+    position: fixed; inset: 0; z-index: 90;
+    background: var(--cream);
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    display: flex; flex-direction: column;
+    overscroll-behavior: contain;
+  }
+  .overview.open { transform: translateY(0); }
+  .overview-header {
+    padding: max(16px, env(safe-area-inset-top)) 22px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(92, 58, 46, 0.08);
+    background: var(--cream);
+  }
+  .overview-header h2 {
+    font-family: 'Caveat', cursive; font-weight: 700; font-size: 28px;
+    color: var(--brown);
+  }
+  .overview-header .close-btn {
+    position: static;
+    background: var(--cream-soft);
+  }
+  .overview-body {
+    flex: 1; overflow-y: auto;
+    padding: 16px 18px max(40px, env(safe-area-inset-bottom));
+  }
+  .overview-section { margin-bottom: 28px; }
+  .overview-section h3 {
+    font-family: 'Caveat', cursive; font-weight: 700; font-size: 24px;
+    color: var(--brown); margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .overview-section h3 .count {
+    font-family: 'Lora', serif; font-size: 13px; font-weight: 400;
+    color: var(--brown-soft); background: var(--cream-soft);
+    padding: 2px 10px; border-radius: 999px;
+  }
+  .overview-list { display: flex; flex-direction: column; gap: 6px; }
+  .overview-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 12px;
+    background: var(--cream-soft); cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .overview-item:active { transform: scale(0.98); }
+  .overview-thumb {
+    width: 48px; height: 48px; border-radius: 8px;
+    background-size: cover; background-position: center;
+    background-color: var(--cream); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; color: var(--brown-soft);
+  }
+  .overview-item-info { flex: 1; min-width: 0; }
+  .overview-item-name {
+    font-size: 15px; font-weight: 500; color: var(--brown);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .overview-item-meta {
+    font-size: 12px; color: var(--brown-soft); margin-top: 2px;
+  }
 </style>
 </head>
 <body>
@@ -296,6 +374,7 @@
 <div class="header" style="display:none;" id="header">
   <div class="header-row">
     <div class="logo">Hasenfutter</div>
+    <button class="icon-btn" id="listBtn" aria-label="Übersicht">📖</button>
     <button class="icon-btn" id="searchBtn" aria-label="Suchen">🔍</button>
   </div>
   <div class="search-bar" id="searchBar">
@@ -321,6 +400,15 @@
   <div id="detailBody"></div>
 </div>
 
+<!-- OVERVIEW (Rezeptliste nach Kategorie) -->
+<div class="overview" id="overview">
+  <div class="overview-header">
+    <h2>Alle Rezepte</h2>
+    <button class="close-btn" id="closeOverview" aria-label="Schließen">✕</button>
+  </div>
+  <div class="overview-body" id="overviewBody"></div>
+</div>
+
 <!-- STATUS (Loading/Error) -->
 <div class="status" id="status">Lade Rezepte...</div>
 
@@ -341,7 +429,6 @@ const IMAGES_FOLDER = 'images/';
 // STATE
 // ============================================
 let allRecipes = [];
-let activeTags = new Set();
 let searchTerm = '';
 let seenToday = new Set();
 let currentDeck = [];
@@ -403,9 +490,11 @@ function csvToRecipes(text) {
   return rows.slice(1).filter(r => r.length > 1 && r[0]).map(r => {
     const obj = {};
     header.forEach((h, i) => obj[h] = (r[i] || '').trim());
+    const tags = (obj.tags || '').split(';').map(t => t.trim()).filter(Boolean);
     return {
       name: obj.name,
-      tags: (obj.tags || '').split(';').map(t => t.trim()).filter(Boolean),
+      tags: tags,
+      kategorie: mainCategory(tags),
       zeit: obj.zeit_minuten,
       portionen: obj.portionen,
       zutaten: (obj.zutaten || '').split('|').map(z => z.trim()).filter(Boolean),
@@ -417,6 +506,17 @@ function csvToRecipes(text) {
     };
   });
 }
+
+// Zuordnung Tags zu einer der 4 Hauptkategorien
+// Reihenfolge wichtig: Dessert hat Vorrang, dann Fleisch, dann Fisch, dann Veggie
+function mainCategory(tags) {
+  if (tags.includes('dessert')) return 'Nachspeisen';
+  if (tags.includes('mit-fleisch')) return 'Mit Fleisch';
+  if (tags.includes('mit-fisch')) return 'Fisch';
+  return 'Vegetarisch';
+}
+
+const CATEGORIES = ['Mit Fleisch', 'Fisch', 'Vegetarisch', 'Nachspeisen'];
 
 // ============================================
 // LADEN
@@ -447,24 +547,46 @@ function initUI() {
 }
 
 // ============================================
-// FILTER
+// FILTER (4 Hauptkategorien, multi-select)
 // ============================================
+let activeCategories = new Set(); // leer = alle anzeigen
+
 function buildFilterBar() {
-  const tags = new Set();
-  allRecipes.forEach(r => r.tags.forEach(t => tags.add(t)));
-  const sorted = [...tags].sort();
   const bar = document.getElementById('filterBar');
   bar.innerHTML = '';
-  sorted.forEach(t => {
+  // "Alle"-Chip zuerst, ist aktiv wenn keine Kategorie gewählt
+  const all = document.createElement('div');
+  all.className = 'chip active';
+  all.textContent = 'Alle';
+  all.dataset.cat = '__all__';
+  all.onclick = () => {
+    activeCategories.clear();
+    updateFilterBar();
+    rebuildDeck();
+  };
+  bar.appendChild(all);
+  // Die 4 Kategorien (jeder Chip toggled seine Kategorie)
+  CATEGORIES.forEach(cat => {
     const chip = document.createElement('div');
     chip.className = 'chip';
-    chip.textContent = t;
+    chip.textContent = cat;
+    chip.dataset.cat = cat;
     chip.onclick = () => {
-      if (activeTags.has(t)) { activeTags.delete(t); chip.classList.remove('active'); }
-      else { activeTags.add(t); chip.classList.add('active'); }
+      if (activeCategories.has(cat)) activeCategories.delete(cat);
+      else activeCategories.add(cat);
+      updateFilterBar();
       rebuildDeck();
     };
     bar.appendChild(chip);
+  });
+}
+
+function updateFilterBar() {
+  document.querySelectorAll('#filterBar .chip').forEach(c => {
+    const cat = c.dataset.cat;
+    const isActive = (cat === '__all__' && activeCategories.size === 0)
+      || activeCategories.has(cat);
+    c.classList.toggle('active', isActive);
   });
 }
 
@@ -488,7 +610,7 @@ document.getElementById('searchInput').oninput = (e) => {
 function filterRecipes() {
   return allRecipes.filter(r => {
     if (seenToday.has(r.name)) return false;
-    if (activeTags.size && ![...activeTags].every(t => r.tags.includes(t))) return false;
+    if (activeCategories.size > 0 && !activeCategories.has(r.kategorie)) return false;
     if (searchTerm && !r.name.toLowerCase().includes(searchTerm) &&
         !r.tags.some(t => t.toLowerCase().includes(searchTerm))) return false;
     return true;
@@ -606,24 +728,70 @@ window.resetToday = resetToday;
 // ============================================
 // DETAIL
 // ============================================
+
+// Zutat skalieren: erkennt Zahl am Anfang (auch 1,5 oder 1/2 oder 80-100), multipliziert
+function scaleIngredient(text, factor) {
+  if (factor === 1) return text;
+
+  const fmt = (n) => {
+    if (Math.abs(n - Math.round(n)) < 0.01) return Math.round(n).toString();
+    return n.toFixed(2).replace(/0+$/, '').replace(/\.$/, '').replace('.', ',');
+  };
+
+  // Range "80-100 g": beide Zahlen skalieren
+  const range = text.match(/^(\d+(?:[.,]\d+)?)\s*-\s*(\d+(?:[.,]\d+)?)\s*(.*)$/);
+  if (range) {
+    const a = parseFloat(range[1].replace(',', '.')) * factor;
+    const b = parseFloat(range[2].replace(',', '.')) * factor;
+    return fmt(a) + '-' + fmt(b) + (range[3] ? ' ' + range[3] : '');
+  }
+
+  // Einzelne Zahl (oder Bruch)
+  const m = text.match(/^(\d+(?:[.,]\d+)?(?:\/\d+)?)\s*(.*)$/);
+  if (!m) return text;
+  const raw = m[1];
+  const rest = m[2];
+  let num;
+  if (raw.includes('/')) {
+    const [a, b] = raw.split('/');
+    num = parseFloat(a) / parseFloat(b);
+  } else {
+    num = parseFloat(raw.replace(',', '.'));
+  }
+  if (isNaN(num)) return text;
+  return fmt(num * factor) + (rest ? ' ' + rest : '');
+}
+
+function renderIngredients(recipe, portions) {
+  const orig = parseInt(recipe.portionen) || 2;
+  const factor = portions / orig;
+  return recipe.zutaten.map(z => `<li>${scaleIngredient(z, factor)}</li>`).join('');
+}
+
 function showDetail(recipe) {
   const body = document.getElementById('detailBody');
   const imgHTML = recipe.bild
     ? `<div class="detail-image" style="background-image:url('${recipe.bild}')"><button class="close-btn" id="closeDetail">✕</button></div>`
     : `<div class="detail-image">🐰<button class="close-btn" id="closeDetail">✕</button></div>`;
+  const origPortions = parseInt(recipe.portionen) || 2;
+  // Mögliche Auswahlen: immer 2, 3, 4. Plus die Original-Zahl falls außerhalb.
+  const portionChoices = [...new Set([2, 3, 4, origPortions])].sort((a, b) => a - b);
   body.innerHTML = `
     ${imgHTML}
     <div class="detail-content">
       <h2 class="detail-title">${recipe.name}</h2>
       <div class="detail-meta">
         ${recipe.zeit ? `<span>⏱ ${recipe.zeit} Minuten</span>` : ''}
-        ${recipe.portionen ? `<span>👥 ${recipe.portionen} Portionen</span>` : ''}
+        <div class="portion-switch" id="portionSwitch">
+          <span>👥 Portionen</span>
+          ${portionChoices.map(p => `<button data-p="${p}" class="${p === origPortions ? 'active' : ''}">${p}</button>`).join('')}
+        </div>
       </div>
-      ${recipe.tags.length ? `<div class="detail-tags">${recipe.tags.map(t => `<div class="chip">${t}</div>`).join('')}</div>` : ''}
+      ${recipe.tags.length ? `<div class="detail-tags"><div class="chip">${recipe.kategorie}</div>${recipe.tags.filter(t => !['mit-fleisch','mit-fisch','vegetarisch','vegan','dessert'].includes(t)).map(t => `<div class="chip">${t}</div>`).join('')}</div>` : ''}
       ${recipe.zutaten.length ? `
         <div class="detail-section">
           <h3>Zutaten</h3>
-          <ul class="ingredients">${recipe.zutaten.map(z => `<li>${z}</li>`).join('')}</ul>
+          <ul class="ingredients" id="ingredientsList">${renderIngredients(recipe, origPortions)}</ul>
         </div>` : ''}
       ${recipe.schritte.length ? `
         <div class="detail-section">
@@ -641,10 +809,68 @@ function showDetail(recipe) {
         </div>` : ''}
     </div>
   `;
+  // Event handler für Portions-Switch
+  const sw = document.getElementById('portionSwitch');
+  if (sw) {
+    sw.querySelectorAll('button').forEach(btn => {
+      btn.onclick = () => {
+        const p = parseInt(btn.dataset.p);
+        sw.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+        const list = document.getElementById('ingredientsList');
+        if (list) list.innerHTML = renderIngredients(recipe, p);
+      };
+    });
+  }
   document.getElementById('detail').classList.add('open');
   document.getElementById('closeDetail').onclick = () => {
     document.getElementById('detail').classList.remove('open');
   };
+}
+
+// ============================================
+// OVERVIEW (Rezeptliste)
+// ============================================
+document.getElementById('listBtn').onclick = () => {
+  buildOverview();
+  document.getElementById('overview').classList.add('open');
+};
+document.getElementById('closeOverview').onclick = () => {
+  document.getElementById('overview').classList.remove('open');
+};
+
+function buildOverview() {
+  const body = document.getElementById('overviewBody');
+  body.innerHTML = '';
+  CATEGORIES.forEach(cat => {
+    const recipes = allRecipes.filter(r => r.kategorie === cat)
+      .sort((a, b) => a.name.localeCompare(b.name, 'de'));
+    if (!recipes.length) return;
+    const section = document.createElement('div');
+    section.className = 'overview-section';
+    section.innerHTML = `<h3>${cat}<span class="count">${recipes.length}</span></h3>
+      <div class="overview-list"></div>`;
+    const list = section.querySelector('.overview-list');
+    recipes.forEach(r => {
+      const item = document.createElement('div');
+      item.className = 'overview-item';
+      const thumb = r.bild
+        ? `<div class="overview-thumb" style="background-image:url('${r.bild}')"></div>`
+        : `<div class="overview-thumb">🐰</div>`;
+      item.innerHTML = `
+        ${thumb}
+        <div class="overview-item-info">
+          <div class="overview-item-name">${r.name}</div>
+          <div class="overview-item-meta">${r.zeit ? '⏱ ' + r.zeit + ' min' : ''}</div>
+        </div>
+      `;
+      item.onclick = () => {
+        document.getElementById('overview').classList.remove('open');
+        showDetail(r);
+      };
+      list.appendChild(item);
+    });
+    body.appendChild(section);
+  });
 }
 
 // ============================================
