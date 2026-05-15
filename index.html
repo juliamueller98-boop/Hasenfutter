@@ -88,6 +88,11 @@
     display: flex; align-items: center; justify-content: center;
     color: var(--brown); font-size: 18px;
   }
+  .icon-btn.small {
+    width: 30px; height: 30px; font-size: 14px;
+    background: transparent; color: var(--brown-soft);
+    opacity: 0.7;
+  }
   .icon-btn:active { transform: scale(0.95); }
 
   .filter-bar {
@@ -358,6 +363,54 @@
   .overview-item-meta {
     font-size: 12px; color: var(--brown-soft); margin-top: 2px;
   }
+
+  /* INFO */
+  .info-section { margin-bottom: 24px; }
+  .info-section h3 {
+    font-family: 'Caveat', cursive; font-weight: 700; font-size: 24px;
+    color: var(--brown); margin-bottom: 8px;
+  }
+  .info-section p {
+    font-size: 14px; line-height: 1.5; color: var(--brown);
+    margin-bottom: 8px;
+  }
+  .info-section ul {
+    list-style: none; padding: 0; margin: 8px 0;
+  }
+  .info-section ul li {
+    font-size: 13px; line-height: 1.5; color: var(--brown);
+    padding: 6px 0 6px 18px; position: relative;
+    border-bottom: 1px dashed rgba(92, 58, 46, 0.1);
+  }
+  .info-section ul li:last-child { border: none; }
+  .info-section ul li::before {
+    content: '•'; position: absolute; left: 4px;
+    color: var(--brown-soft);
+  }
+  .info-section code {
+    background: var(--cream-soft); padding: 1px 6px;
+    border-radius: 4px; font-family: monospace;
+    font-size: 12px; color: var(--brown);
+  }
+  .info-section.disclaimer {
+    background: var(--cream-soft);
+    padding: 14px 16px; border-radius: 12px;
+    margin-top: 28px;
+  }
+  .info-section.disclaimer p {
+    font-size: 13px; color: var(--brown-soft);
+  }
+  .info-section a {
+    color: var(--brown); text-decoration: underline;
+  }
+  .info-section a.info-link {
+    display: inline-block;
+    background: var(--brown); color: var(--cream);
+    padding: 8px 16px; border-radius: 999px;
+    text-decoration: none;
+    font-size: 14px; margin: 4px 0 8px;
+  }
+  .info-section a.info-link:active { transform: scale(0.98); }
 </style>
 </head>
 <body>
@@ -374,7 +427,9 @@
 <div class="header" style="display:none;" id="header">
   <div class="header-row">
     <div class="logo">Hasenfutter</div>
+    <button class="icon-btn small" id="resetBtn" aria-label="Heute zurücksetzen" title="Heute zurücksetzen">↺</button>
     <button class="icon-btn" id="listBtn" aria-label="Übersicht">📖</button>
+    <button class="icon-btn" id="infoBtn" aria-label="Info">ℹ️</button>
     <button class="icon-btn" id="searchBtn" aria-label="Suchen">🔍</button>
   </div>
   <div class="search-bar" id="searchBar">
@@ -390,9 +445,57 @@
 
 <!-- ACTION BUTTONS -->
 <div class="actions" style="display:none;" id="actions">
-  <button class="action-btn reset" id="resetBtn" title="Zurücksetzen">↺</button>
   <button class="action-btn skip" id="skipBtn">✕</button>
   <button class="action-btn open" id="openBtn">✓</button>
+</div>
+
+<!-- INFO -->
+<div class="overview" id="info">
+  <div class="overview-header">
+    <h2>Über Hasenfutter</h2>
+    <button class="close-btn" id="closeInfo" aria-label="Schließen">✕</button>
+  </div>
+  <div class="overview-body">
+    <div class="info-section">
+      <h3>Für Luisa & Felix 🐰</h3>
+      <p>Diese App wurde euch zur Hochzeit geschenkt. Sie zeigt eure Lieblingsrezepte als Swipe-Stapel, ähnlich wie eine Dating-App, nur für Essen statt Menschen.</p>
+      <p><strong>Links wischen</strong> oder ✕ tippen: heute nicht. <strong>Rechts wischen</strong> oder ✓ tippen: Rezept ansehen.</p>
+      <p>Über 📖 oben kommt ihr zur Übersicht aller Rezepte nach Kategorie.</p>
+    </div>
+
+    <div class="info-section">
+      <h3>Neue Rezepte hinzufügen</h3>
+      <p>Die Rezepte leben in einem Google Sheet. Dort eine neue Zeile anlegen, fertig. Die App lädt das Rezept automatisch beim nächsten Öffnen.</p>
+      <p><a class="info-link" id="sheetEditLink" target="_blank" rel="noopener">→ Sheet zum Bearbeiten öffnen</a></p>
+      <p><strong>Spalten:</strong></p>
+      <ul>
+        <li><strong>name:</strong> wie das Rezept heißen soll</li>
+        <li><strong>tags:</strong> mit Semikolon getrennt. Wichtig ist <em>genau eines</em> davon: <code>mit-fleisch</code>, <code>mit-fisch</code>, <code>vegetarisch</code>, <code>vegan</code> oder <code>dessert</code>. Sonst landet das Rezept in "Vegetarisch".</li>
+        <li><strong>zeit_minuten:</strong> nur Zahl</li>
+        <li><strong>portionen:</strong> meistens 2</li>
+        <li><strong>zutaten:</strong> mit <code>|</code> getrennt (senkrechter Strich)</li>
+        <li><strong>schritte:</strong> auch mit <code>|</code> getrennt</li>
+        <li><strong>bild:</strong> Dateiname wie <code>linsen-curry.jpg</code> oder leer lassen</li>
+        <li><strong>tipps:</strong> optional</li>
+        <li><strong>original_url</strong> und <strong>original_quelle:</strong> falls inspiriert von einer Quelle</li>
+      </ul>
+    </div>
+
+    <div class="info-section">
+      <h3>Und das Foto?</h3>
+      <p>Da Bilder aus technischen Gründen leider nicht direkt ins Sheet können, brauchen sie einen kleinen Umweg. Aber kein Stress: <strong>schickt mir einfach ein Foto vom fertigen Gericht</strong> (oder eine kurze Beschreibung, dann generiere ich euch eins per KI). Ich lade es hoch und es taucht in der App auf. Das geht in zwei Minuten und ihr müsst euch um die Technik nicht kümmern.</p>
+      <p>Falls ihr es selbst machen wollt: Mit der <strong>GitHub Mobile App</strong> könnt ihr Bilder direkt vom Handy in den <code>images/</code>-Ordner hochladen. Dateiname muss exakt dem im Sheet entsprechen (klein, mit Bindestrichen, z.B. <code>spargelauflauf.jpg</code>).</p>
+      <p>Rezepte ohne Foto zeigen den Häschen-Platzhalter, das ist also nicht schlimm wenn ihr erstmal nur ein Rezept ohne Bild anlegen wollt.</p>
+    </div>
+
+    <div class="info-section disclaimer">
+      <h3>Rechtliches</h3>
+      <p>Diese App ist ein <strong>privates Hochzeitsgeschenk</strong> und nicht für die Öffentlichkeit bestimmt. Sie ist absichtlich von Suchmaschinen ausgeschlossen.</p>
+      <p>Alle Bilder sind <strong>selbst aufgenommen oder mit KI generiert</strong>. Es werden keine fremden Bilder verwendet.</p>
+      <p>Rezepte sind <strong>eigene Adaptionen</strong>. Wo Inspirationsquellen verlinkt sind, dient das ausschließlich der Quellenangabe. Es findet keine kommerzielle Nutzung statt.</p>
+      <p>Schriftarten werden über <a href="https://fonts.bunny.net" target="_blank" rel="noopener">Bunny Fonts</a> geladen (DSGVO-konform, EU-gehostet). Es werden keine personenbezogenen Daten gespeichert oder verarbeitet.</p>
+    </div>
+  </div>
 </div>
 
 <!-- DETAIL -->
@@ -419,6 +522,11 @@
 // Google Sheet als CSV veröffentlichen und URL hier einfügen.
 // Anleitung: Sheet > Datei > Im Web veröffentlichen > Format CSV > Veröffentlichen
 const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS6kfZYRSdPYWSeQZETM1r9RKpci2X1JsdSWoQl3B8UPCNvb1hy6e9_XE1qa6YXmnDU7ofUpgoVmjxG/pub?output=csv';
+
+// Edit-Link für Luisa & Felix (wird in der Info-Seite verlinkt).
+// Falls leer, wird der Link in der Info-Seite einfach ausgeblendet.
+const SHEET_EDIT_URL = 'https://docs.google.com/spreadsheets/d/1_EfPLDlWCFHT_NxF2Dvumkk4E5PXYS6UbqKIyZmh8h4/edit?gid=1527292842#gid=1527292842';
+
 // Fallback: lokale CSV (für den ersten Test ohne Sheet)
 const FALLBACK_CSV = 'rezepte-hasenfutter.csv';
 
@@ -510,12 +618,12 @@ function csvToRecipes(text) {
 // Reihenfolge wichtig: Dessert hat Vorrang, dann Fleisch, dann Fisch, dann Veggie
 function mainCategory(tags) {
   if (tags.includes('dessert')) return 'Nachspeisen';
-  if (tags.includes('mit-fleisch')) return 'Mit Fleisch';
+  if (tags.includes('mit-fleisch')) return 'Fleisch';
   if (tags.includes('mit-fisch')) return 'Fisch';
   return 'Vegetarisch';
 }
 
-const CATEGORIES = ['Mit Fleisch', 'Fisch', 'Vegetarisch', 'Nachspeisen'];
+const CATEGORIES = ['Fleisch', 'Fisch', 'Vegetarisch', 'Nachspeisen'];
 
 // ============================================
 // LADEN
@@ -625,18 +733,29 @@ function shuffle(arr) {
 }
 
 function rebuildDeck() {
+  // Komplett neu (z.B. bei Filter-Wechsel): einmal mischen, dann stabile Reihenfolge
   currentDeck = shuffle(filterRecipes());
+  renderDeck();
+}
+
+function renderDeck() {
   const deck = document.getElementById('deck');
   deck.innerHTML = '';
   if (!currentDeck.length) {
     deck.innerHTML = `<div class="empty">Alle Rezepte für heute durch ✨<button onclick="resetToday()">Zurücksetzen</button></div>`;
     return;
   }
-  // Top 3 als Stack rendern
+  // Top 3 als Stack rendern (gleiche Reihenfolge wie currentDeck)
   currentDeck.slice(0, 3).reverse().forEach((r, idx, arr) => {
     const top = idx === arr.length - 1; // letztes = oberstes
     deck.appendChild(makeCard(r, top));
   });
+}
+
+function advanceDeck() {
+  // Erste Karte rausnehmen, KEIN neues Mischen
+  currentDeck.shift();
+  renderDeck();
 }
 
 function makeCard(recipe, interactive) {
@@ -700,13 +819,13 @@ function attachSwipe(card, recipe) {
 function skipRecipe(recipe, card) {
   if (card) card.classList.add('gone-left');
   seenToday.add(recipe.name); saveSeen();
-  setTimeout(rebuildDeck, 300);
+  setTimeout(advanceDeck, 300);
 }
 function openRecipe(recipe, card) {
   if (card) card.classList.add('gone-right');
   seenToday.add(recipe.name); saveSeen();
   showDetail(recipe);
-  setTimeout(rebuildDeck, 300);
+  setTimeout(advanceDeck, 300);
 }
 
 // Action Buttons
@@ -871,6 +990,25 @@ function buildOverview() {
     body.appendChild(section);
   });
 }
+
+// ============================================
+// INFO
+// ============================================
+document.getElementById('infoBtn').onclick = () => {
+  document.getElementById('info').classList.add('open');
+};
+document.getElementById('closeInfo').onclick = () => {
+  document.getElementById('info').classList.remove('open');
+};
+// Sheet-Edit-Link einsetzen oder ausblenden
+(() => {
+  const link = document.getElementById('sheetEditLink');
+  if (SHEET_EDIT_URL) {
+    link.href = SHEET_EDIT_URL;
+  } else if (link) {
+    link.parentElement.style.display = 'none';
+  }
+})();
 
 // ============================================
 // SERVICE WORKER (PWA)
