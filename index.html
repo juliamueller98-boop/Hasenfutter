@@ -411,6 +411,33 @@
     font-size: 14px; margin: 4px 0 8px;
   }
   .info-section a.info-link:active { transform: scale(0.98); }
+
+  .prompt-box {
+    position: relative;
+    background: var(--cream-soft);
+    border-radius: 12px;
+    padding: 14px 14px 14px 14px;
+    margin-top: 10px;
+  }
+  .prompt-box pre {
+    font-family: 'Lora', serif;
+    font-size: 13px; line-height: 1.5;
+    color: var(--brown);
+    white-space: pre-wrap; word-wrap: break-word;
+    margin: 0; padding-top: 24px;
+  }
+  .copy-btn {
+    position: absolute; top: 8px; right: 8px;
+    background: var(--brown); color: var(--cream);
+    border: none; border-radius: 8px;
+    padding: 4px 10px; font-size: 12px;
+    font-family: 'Lora', serif; font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .copy-btn:hover { background: var(--brown-soft); }
+  .copy-btn:active { transform: scale(0.95); }
+  .copy-btn.copied { background: var(--sage); }
 </style>
 </head>
 <body>
@@ -428,9 +455,9 @@
   <div class="header-row">
     <div class="logo">Hasenfutter</div>
     <button class="icon-btn small" id="resetBtn" aria-label="Heute zurücksetzen" title="Heute zurücksetzen">↺</button>
-    <button class="icon-btn" id="listBtn" aria-label="Übersicht">📖</button>
     <button class="icon-btn" id="infoBtn" aria-label="Info">ℹ️</button>
     <button class="icon-btn" id="searchBtn" aria-label="Suchen">🔍</button>
+    <button class="icon-btn" id="listBtn" aria-label="Übersicht">📖</button>
   </div>
   <div class="search-bar" id="searchBar">
     <input type="text" id="searchInput" placeholder="Rezept suchen..." autocomplete="off">
@@ -464,36 +491,58 @@
     </div>
 
     <div class="info-section">
+      <h3>Was schon gewischt wurde</h3>
+      <p>Rezepte, die ihr heute schon weggewischt habt, verschwinden für diesen Tag. <strong>Um Mitternacht stellt sich das automatisch zurück</strong>, dann sind alle wieder da.</p>
+      <p>Wenn ihr nicht warten wollt: oben links der kleine <strong>↺-Button</strong> setzt sofort alles zurück.</p>
+    </div>
+
+    <div class="info-section">
+      <h3>Inspirationsquellen</h3>
+      <p>Bei Rezepten, die wir nicht selbst erfunden, sondern irgendwo entdeckt haben (Blog, Instagram, Kochbuch), findet ihr ganz <strong>unten auf der Detailseite einen Link zur Originalquelle</strong>. Damit könnt ihr direkt zum Beitrag oder zur Website springen.</p>
+    </div>
+
+    <div class="info-section">
       <h3>Neue Rezepte hinzufügen</h3>
-      <p>Die Rezepte leben in einem Google Sheet. Dort eine neue Zeile anlegen, fertig. Die App lädt das Rezept automatisch beim nächsten Öffnen.</p>
+      <p>Die Rezepte leben in einem Google Sheet. Eine neue Zeile ausfüllen, die App lädt sie automatisch beim nächsten Öffnen.</p>
       <p><a class="info-link" id="sheetEditLink" target="_blank" rel="noopener">→ Sheet zum Bearbeiten öffnen</a></p>
-      <p><strong>Spalten:</strong></p>
-      <ul>
-        <li><strong>name:</strong> wie das Rezept heißen soll</li>
-        <li><strong>tags:</strong> mit Semikolon getrennt. Wichtig ist <em>genau eines</em> davon: <code>mit-fleisch</code>, <code>mit-fisch</code>, <code>vegetarisch</code>, <code>vegan</code> oder <code>dessert</code>. Sonst landet das Rezept in "Vegetarisch".</li>
-        <li><strong>zeit_minuten:</strong> nur Zahl</li>
-        <li><strong>portionen:</strong> meistens 2</li>
-        <li><strong>zutaten:</strong> mit <code>|</code> getrennt (senkrechter Strich)</li>
-        <li><strong>schritte:</strong> auch mit <code>|</code> getrennt</li>
-        <li><strong>bild:</strong> Dateiname wie <code>linsen-curry.jpg</code> oder leer lassen</li>
-        <li><strong>tipps:</strong> optional</li>
-        <li><strong>original_url</strong> und <strong>original_quelle:</strong> falls inspiriert von einer Quelle</li>
-      </ul>
+
+      <p style="margin-top:14px;"><strong>Der einfachste Weg:</strong> Kopiert den Prompt unten in ChatGPT oder Claude, fügt euren Rezept-Link oder den Text rein, und ihr bekommt eine fertige Tabelle, die ihr 1:1 ins Sheet eintippt.</p>
+
+      <div class="prompt-box">
+        <button class="copy-btn" id="copyPromptBtn" aria-label="Prompt kopieren">📋 Kopieren</button>
+        <pre id="promptText">Bereite ein Rezept für unser Hasenfutter-Sheet vor.
+
+Quelle: [HIER LINK ODER REZEPT-TEXT EINFÜGEN]
+
+Gib das Ergebnis spaltenweise zurück, damit ich es direkt ins Google Sheet kopieren kann.
+Jede Spalte als eigene Zeile, klar beschriftet:
+
+name: deutscher Rezeptname
+tags: mit Semikolon getrennt. ZWINGEND genau eines davon: mit-fleisch / mit-fisch / vegetarisch / vegan / dessert. Plus 2-3 optionale wie italienisch, pasta, schnell, suppe, asiatisch, ofengericht.
+zeit_minuten: nur eine Zahl, z.B. 25
+portionen: in der Regel 2
+zutaten: alle Zutaten mit einem senkrechten Strich | getrennt, auf 2 Portionen umgerechnet. Beispiel: 200 g Mehl | 1 Zwiebel | 2 EL Olivenöl | Salz und Pfeffer
+schritte: alle Zubereitungsschritte mit | getrennt, in EIGENEN Worten umformuliert (kein wörtliches Kopieren wegen Copyright)
+bild: leer lassen
+tipps: ein kurzer Tipp falls passend, sonst leer
+original_url: Link zur Quelle
+original_quelle: kurzer Name der Quelle, z.B. "Gaumenfreundin" oder "@instagram_handle"
+
+Ausgabe bitte ohne Anführungszeichen, einfach Klartext pro Spalte.</pre>
+      </div>
     </div>
 
     <div class="info-section">
       <h3>Und das Foto?</h3>
-      <p>Da Bilder aus technischen Gründen leider nicht direkt ins Sheet können, brauchen sie einen kleinen Umweg. Aber kein Stress: <strong>schickt mir einfach ein Foto vom fertigen Gericht</strong> (oder eine kurze Beschreibung, dann generiere ich euch eins per KI). Ich lade es hoch und es taucht in der App auf. Das geht in zwei Minuten und ihr müsst euch um die Technik nicht kümmern.</p>
-      <p>Falls ihr es selbst machen wollt: Mit der <strong>GitHub Mobile App</strong> könnt ihr Bilder direkt vom Handy in den <code>images/</code>-Ordner hochladen. Dateiname muss exakt dem im Sheet entsprechen (klein, mit Bindestrichen, z.B. <code>spargelauflauf.jpg</code>).</p>
+      <p>Da Bilder aus technischen Gründen leider nicht direkt ins Sheet können, brauchen sie einen kleinen Umweg. Aber kein Stress: <strong>schickt mir einfach ein Foto vom fertigen Gericht</strong> (oder eine kurze Beschreibung, dann generiere ich euch eins per KI). Ich lade es hoch und es taucht in der App auf.</p>
       <p>Rezepte ohne Foto zeigen den Häschen-Platzhalter, das ist also nicht schlimm wenn ihr erstmal nur ein Rezept ohne Bild anlegen wollt.</p>
     </div>
 
     <div class="info-section disclaimer">
-      <h3>Rechtliches</h3>
+      <h3>Rechtliches & Datenschutz</h3>
       <p>Diese App ist ein <strong>privates Hochzeitsgeschenk</strong> und nicht für die Öffentlichkeit bestimmt. Sie ist absichtlich von Suchmaschinen ausgeschlossen.</p>
-      <p>Alle Bilder sind <strong>selbst aufgenommen oder mit KI generiert</strong>. Es werden keine fremden Bilder verwendet.</p>
-      <p>Rezepte sind <strong>eigene Adaptionen</strong>. Wo Inspirationsquellen verlinkt sind, dient das ausschließlich der Quellenangabe. Es findet keine kommerzielle Nutzung statt.</p>
-      <p>Schriftarten werden über <a href="https://fonts.bunny.net" target="_blank" rel="noopener">Bunny Fonts</a> geladen (DSGVO-konform, EU-gehostet). Es werden keine personenbezogenen Daten gespeichert oder verarbeitet.</p>
+      <p>Alle Bilder sind <strong>selbst aufgenommen oder mit KI generiert</strong>. Es werden keine fremden Bilder verwendet. Rezepte sind <strong>eigene Adaptionen</strong>; wo Inspirationsquellen verlinkt sind, dient das ausschließlich der Quellenangabe. Es findet keine kommerzielle Nutzung statt.</p>
+      <p>Die App hat <strong>kein Backend, keine Anmeldung, keine Cookies, kein Tracking, keine Analytics</strong>. Im Browser wird lokal gespeichert, welche Rezepte ihr heute schon weggewischt habt (täglicher automatischer Reset). Beim Aufruf werden technisch unvermeidbar IP-Adressen an die Hosting-Dienste (GitHub Pages, Google für das Rezept-Sheet, <a href="https://fonts.bunny.net" target="_blank" rel="noopener">Bunny Fonts</a> für die Schriftarten) übermittelt; das ist bei jeder Webseite so. Bunny Fonts ist DSGVO-konform und EU-gehostet.</p>
     </div>
   </div>
 </div>
@@ -1008,6 +1057,32 @@ document.getElementById('closeInfo').onclick = () => {
   } else if (link) {
     link.parentElement.style.display = 'none';
   }
+})();
+// Prompt kopieren
+(() => {
+  const btn = document.getElementById('copyPromptBtn');
+  const pre = document.getElementById('promptText');
+  if (!btn || !pre) return;
+  btn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(pre.textContent);
+      const orig = btn.textContent;
+      btn.textContent = '✓ Kopiert';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = orig;
+        btn.classList.remove('copied');
+      }, 2000);
+    } catch (e) {
+      // Fallback für ältere Browser
+      const range = document.createRange();
+      range.selectNode(pre);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(range);
+      try { document.execCommand('copy'); } catch (_) {}
+      window.getSelection().removeAllRanges();
+    }
+  });
 })();
 
 // ============================================
