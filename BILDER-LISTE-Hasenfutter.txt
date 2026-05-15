@@ -1,0 +1,51 @@
+Diese Dateien müssen im Ordner images/ liegen
+==================================================
+
+Schon vorhanden ✓
+  - cover.jpg              (Splash-Screen)
+  - icon-192.png           (App-Icon 192x192)
+  - icon-512.png           (App-Icon 512x512)
+  - spargelauflauf.jpg
+  - lasagne-bolognese.jpg
+
+Noch zu ergänzen (Rezeptbilder, 39 Stück):
+
+  - apfel-crumble.jpg
+  - apfel-pfannkuchen.jpg
+  - apfelkuchen.jpg
+  - asiatische-udon-bowl.jpg
+  - auberginen-curry.jpg
+  - auberginen-hummus-halloumi.jpg
+  - baked-cherry-tomato-pasta.jpg
+  - burrata-spargel-salat.jpg
+  - crispy-rice-salad.jpg
+  - feldsalat-pilze-trueffel.jpg
+  - garnelen-avocado-salat.jpg
+  - garnelen-orzo-pfanne.jpg
+  - garnelen-pasta.jpg
+  - gemuese-flammkuchen.jpg
+  - halloumi-spargel-carbonara.jpg
+  - herbstsalat-feta-walnuesse.jpg
+  - kartoffelgratin.jpg
+  - kimchi-fried-rice.jpg
+  - kuerbis-karotten-suppe.jpg
+  - lachs-blaetterteig.jpg
+  - lasagne-bolognese.jpg
+  - lasagne-sojahack.jpg
+  - lemon-orzo-lachs.jpg
+  - mousse-au-chocolat.jpg
+  - nudeln-tomatensauce.jpg
+  - onepot-gyoza.jpg
+  - orzo-onepot-lasagne.jpg
+  - quinoa-halloumi-bowl.jpg
+  - reis-bowl-veggie.jpg
+  - schweinefilet-apfel-auflauf.jpg
+  - spargel-lachs-flammkuchen.jpg
+  - spargelauflauf.jpg
+  - spinat-feta-gnocchi.jpg
+  - spinatsalat-datteln-avocado.jpg
+  - sweet-chilli-salmon-pasta.jpg
+  - sweet-spicy-salmon-bowl.jpg
+  - thai-curry-ofenspitzkohl.jpg
+  - tomaten-knoblauch-pasta.jpg
+  - udon-tofu-mango.jpg

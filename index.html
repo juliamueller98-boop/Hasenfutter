@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#FAF3E7">
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+<meta name="googlebot" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Hasenfutter">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="images/icon-192.png">
+<link rel="icon" href="images/icon-192.png">
+<title>Hasenfutter</title>
+<!-- Bunny Fonts: DSGVO-konform, EU-hosted (Slowenien), kein Tracking. Drop-in für Google Fonts. -->
+<link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
+<link href="https://fonts.bunny.net/css?family=caveat:500,700|lora:400,500,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #FAF3E7;
+    --cream-soft: #F5EBD7;
+    --brown: #5C3A2E;
+    --brown-soft: #8A6450;
+    --terracotta: #C97B5A;
+    --sage: #8A9B7F;
+    --shadow: 0 8px 24px rgba(92, 58, 46, 0.18);
+    --shadow-soft: 0 4px 12px rgba(92, 58, 46, 0.1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+  body {
+    font-family: 'Lora', serif;
+    background: var(--cream);
+    color: var(--brown);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* SPLASH */
+  .splash {
+    position: fixed; inset: 0; z-index: 200;
+    background: var(--cream);
+    cursor: pointer;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    overflow: hidden;
+  }
+  .splash.hidden { opacity: 0; transform: translateY(-100%); pointer-events: none; }
+  .splash-image { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
+  .splash-fallback {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Caveat', cursive; font-size: 84px;
+    color: var(--brown); background: var(--cream);
+  }
+  .splash-prompt {
+    position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%);
+    text-align: center; color: var(--brown);
+    background: rgba(250, 243, 231, 0.92);
+    padding: 8px 18px; border-radius: 999px;
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    animation: bounce 1.8s ease-in-out infinite;
+    font-family: 'Caveat', cursive; font-size: 22px;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-8px); }
+  }
+
+  /* HEADER */
+  .header {
+    position: fixed; top: 0; left: 0; right: 0;
+    background: var(--cream);
+    padding: 12px 16px 8px;
+    z-index: 50;
+    border-bottom: 1px solid rgba(92, 58, 46, 0.08);
+    padding-top: max(12px, env(safe-area-inset-top));
+  }
+  .header-row { display: flex; align-items: center; gap: 10px; }
+  .logo {
+    font-family: 'Caveat', cursive; font-size: 28px; font-weight: 700;
+    color: var(--brown); flex: 1;
+  }
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--cream-soft); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--brown); font-size: 18px;
+  }
+  .icon-btn:active { transform: scale(0.95); }
+
+  .filter-bar {
+    display: flex; gap: 6px; overflow-x: auto;
+    margin-top: 8px; padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .filter-bar::-webkit-scrollbar { display: none; }
+  .chip {
+    flex-shrink: 0; padding: 5px 12px; border-radius: 999px;
+    background: var(--cream-soft); color: var(--brown-soft);
+    font-size: 13px; cursor: pointer;
+    border: 1px solid transparent; white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .chip.active { background: var(--brown); color: var(--cream); border-color: var(--brown); }
+
+  .search-bar {
+    display: none; margin-top: 8px; position: relative;
+  }
+  .search-bar.open { display: block; }
+  .search-bar input {
+    width: 100%; padding: 10px 14px; border-radius: 999px;
+    border: 1px solid rgba(92, 58, 46, 0.2);
+    background: var(--cream-soft); color: var(--brown);
+    font-family: 'Lora', serif; font-size: 15px; outline: none;
+  }
+
+  /* DECK */
+  .deck-container {
+    position: fixed; inset: 0;
+    padding-top: 110px; padding-bottom: 90px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .deck {
+    position: relative;
+    width: min(88vw, 360px);
+    height: min(65vh, 520px);
+  }
+  .card {
+    position: absolute; inset: 0;
+    background: var(--cream-soft);
+    border-radius: 24px; overflow: hidden;
+    box-shadow: var(--shadow); cursor: grab;
+    display: flex; flex-direction: column;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    touch-action: none;
+  }
+  .card.dragging { transition: none; cursor: grabbing; }
+  .card.gone-left { transform: translateX(-150%) rotate(-30deg) !important; opacity: 0; }
+  .card.gone-right { transform: translateX(150%) rotate(30deg) !important; opacity: 0; }
+  .card-image {
+    flex: 1; background-size: cover; background-position: center;
+    background-color: var(--cream);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 80px; color: var(--brown-soft);
+  }
+  .card-info {
+    padding: 14px 18px 16px;
+    background: var(--cream);
+    border-top: 1px solid rgba(92, 58, 46, 0.06);
+  }
+  .card-title {
+    font-family: 'Lora', serif; font-weight: 600; font-size: 19px;
+    color: var(--brown); margin-bottom: 4px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .card-meta { font-size: 13px; color: var(--brown-soft); }
+
+  /* Swipe overlay labels */
+  .swipe-label {
+    position: absolute; top: 22px;
+    padding: 6px 14px; border-radius: 999px;
+    font-family: 'Caveat', cursive; font-size: 24px;
+    pointer-events: none; opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .swipe-label.left { left: 18px; background: rgba(201, 123, 90, 0.95); color: white; transform: rotate(-8deg); }
+  .swipe-label.right { right: 18px; background: rgba(138, 155, 127, 0.95); color: white; transform: rotate(8deg); }
+
+  /* ACTION BUTTONS */
+  .actions {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    display: flex; justify-content: center; gap: 24px;
+    padding: 16px 16px max(16px, env(safe-area-inset-bottom));
+    background: linear-gradient(to top, var(--cream) 60%, rgba(250,243,231,0));
+    z-index: 40;
+  }
+  .action-btn {
+    width: 58px; height: 58px; border-radius: 50%;
+    border: none; cursor: pointer; font-size: 24px;
+    box-shadow: var(--shadow); background: white;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .action-btn:active { transform: scale(0.92); }
+  .action-btn.skip { color: var(--terracotta); }
+  .action-btn.open { color: var(--sage); }
+  .action-btn.reset { width: 46px; height: 46px; font-size: 18px; color: var(--brown-soft); }
+
+  /* EMPTY */
+  .empty {
+    text-align: center; padding: 40px 20px;
+    font-family: 'Caveat', cursive; font-size: 28px; color: var(--brown-soft);
+  }
+  .empty button {
+    display: block; margin: 16px auto 0;
+    padding: 10px 22px; border-radius: 999px;
+    background: var(--brown); color: var(--cream);
+    border: none; font-family: 'Lora', serif; font-size: 15px;
+    cursor: pointer;
+  }
+
+  /* DETAIL */
+  .detail {
+    position: fixed; inset: 0; z-index: 100;
+    background: var(--cream);
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .detail.open { transform: translateY(0); }
+  .detail-image {
+    width: 100%; height: 280px;
+    background-size: cover; background-position: center;
+    background-color: var(--cream-soft);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 100px; color: var(--brown-soft);
+    position: relative;
+  }
+  .close-btn {
+    position: absolute; top: max(16px, env(safe-area-inset-top)); right: 16px;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(250, 243, 231, 0.9); border: none;
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    cursor: pointer; font-size: 20px; color: var(--brown);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .detail-content { padding: 20px 22px 60px; }
+  .detail-title {
+    font-family: 'Lora', serif; font-weight: 600; font-size: 26px;
+    color: var(--brown); margin-bottom: 8px; line-height: 1.2;
+  }
+  .detail-meta {
+    display: flex; flex-wrap: wrap; gap: 12px;
+    font-size: 14px; color: var(--brown-soft); margin-bottom: 18px;
+  }
+  .detail-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+  .detail-tags .chip { cursor: default; font-size: 12px; padding: 4px 10px; }
+  .detail-section { margin-bottom: 24px; }
+  .detail-section h3 {
+    font-family: 'Caveat', cursive; font-weight: 700; font-size: 24px;
+    color: var(--brown); margin-bottom: 10px;
+  }
+  .ingredients { list-style: none; }
+  .ingredients li {
+    padding: 7px 0; border-bottom: 1px dashed rgba(92, 58, 46, 0.12);
+    font-size: 15px; line-height: 1.4;
+  }
+  .ingredients li:last-child { border: none; }
+  .steps { list-style: none; counter-reset: step; }
+  .steps li {
+    position: relative; padding-left: 36px; margin-bottom: 14px;
+    counter-increment: step; font-size: 15px; line-height: 1.5;
+  }
+  .steps li::before {
+    content: counter(step);
+    position: absolute; left: 0; top: 0;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--brown); color: var(--cream);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Lora', serif; font-weight: 600; font-size: 13px;
+  }
+  .tipps {
+    background: var(--cream-soft); padding: 14px 16px;
+    border-radius: 14px; font-size: 14px; line-height: 1.5;
+    color: var(--brown-soft);
+  }
+  .source {
+    margin-top: 30px; padding-top: 16px;
+    border-top: 1px solid rgba(92, 58, 46, 0.1);
+    font-size: 12px; color: var(--brown-soft); text-align: center;
+  }
+  .source a { color: var(--brown-soft); text-decoration: underline; }
+
+  /* LOADING / ERROR */
+  .status {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Caveat', cursive; font-size: 26px; color: var(--brown-soft);
+    text-align: center; padding: 20px;
+  }
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div class="splash" id="splash">
+  <img class="splash-image" id="splashImage" src="images/cover.jpg" alt="Hasenfutter"
+       onerror="this.style.display='none'; document.getElementById('splashFallback').style.display='flex';">
+  <div class="splash-fallback" id="splashFallback" style="display:none;">Hasenfutter 🐰</div>
+  <div class="splash-prompt">Tippen zum Starten</div>
+</div>
+
+<!-- HEADER -->
+<div class="header" style="display:none;" id="header">
+  <div class="header-row">
+    <div class="logo">Hasenfutter</div>
+    <button class="icon-btn" id="searchBtn" aria-label="Suchen">🔍</button>
+  </div>
+  <div class="search-bar" id="searchBar">
+    <input type="text" id="searchInput" placeholder="Rezept suchen..." autocomplete="off">
+  </div>
+  <div class="filter-bar" id="filterBar"></div>
+</div>
+
+<!-- DECK -->
+<div class="deck-container" style="display:none;" id="deckContainer">
+  <div class="deck" id="deck"></div>
+</div>
+
+<!-- ACTION BUTTONS -->
+<div class="actions" style="display:none;" id="actions">
+  <button class="action-btn reset" id="resetBtn" title="Zurücksetzen">↺</button>
+  <button class="action-btn skip" id="skipBtn">✕</button>
+  <button class="action-btn open" id="openBtn">✓</button>
+</div>
+
+<!-- DETAIL -->
+<div class="detail" id="detail">
+  <div id="detailBody"></div>
+</div>
+
+<!-- STATUS (Loading/Error) -->
+<div class="status" id="status">Lade Rezepte...</div>
+
+<script>
+// ============================================
+// KONFIGURATION
+// ============================================
+// Google Sheet als CSV veröffentlichen und URL hier einfügen.
+// Anleitung: Sheet > Datei > Im Web veröffentlichen > Format CSV > Veröffentlichen
+const SHEET_CSV_URL = ''; // <-- HIER URL EINFÜGEN
+
+// Fallback: lokale CSV (für den ersten Test ohne Sheet)
+const FALLBACK_CSV = 'rezepte-hasenfutter.csv';
+
+const IMAGES_FOLDER = 'images/';
+
+// ============================================
+// STATE
+// ============================================
+let allRecipes = [];
+let activeTags = new Set();
+let searchTerm = '';
+let seenToday = new Set();
+let currentDeck = [];
+
+// localStorage: heute schon gesehen
+const TODAY_KEY = 'hasenfutter-seen-' + new Date().toISOString().slice(0, 10);
+try {
+  const stored = JSON.parse(localStorage.getItem(TODAY_KEY) || '[]');
+  seenToday = new Set(stored);
+  // Alte Tages-Keys aufräumen
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('hasenfutter-seen-') && k !== TODAY_KEY) localStorage.removeItem(k);
+  }
+} catch (e) {}
+
+function saveSeen() {
+  try { localStorage.setItem(TODAY_KEY, JSON.stringify([...seenToday])); } catch (e) {}
+}
+
+// ============================================
+// SPLASH
+// ============================================
+document.getElementById('splash').addEventListener('click', () => {
+  document.getElementById('splash').classList.add('hidden');
+});
+
+// ============================================
+// CSV-PARSER (robust mit Anführungszeichen)
+// ============================================
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"' && text[i+1] === '"') { field += '"'; i++; }
+      else if (c === '"') inQuotes = false;
+      else field += c;
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ',') { row.push(field); field = ''; }
+      else if (c === '\n' || c === '\r') {
+        if (c === '\r' && text[i+1] === '\n') i++;
+        row.push(field); field = '';
+        if (row.length > 1 || row[0] !== '') rows.push(row);
+        row = [];
+      } else field += c;
+    }
+  }
+  if (field !== '' || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+function csvToRecipes(text) {
+  const rows = parseCSV(text);
+  if (!rows.length) return [];
+  const header = rows[0].map(h => h.trim());
+  return rows.slice(1).filter(r => r.length > 1 && r[0]).map(r => {
+    const obj = {};
+    header.forEach((h, i) => obj[h] = (r[i] || '').trim());
+    return {
+      name: obj.name,
+      tags: (obj.tags || '').split(';').map(t => t.trim()).filter(Boolean),
+      zeit: obj.zeit_minuten,
+      portionen: obj.portionen,
+      zutaten: (obj.zutaten || '').split('|').map(z => z.trim()).filter(Boolean),
+      schritte: (obj.schritte || '').split('|').map(s => s.trim()).filter(Boolean),
+      bild: obj.bild ? IMAGES_FOLDER + obj.bild : '',
+      tipps: obj.tipps || '',
+      original_url: obj.original_url || '',
+      original_quelle: obj.original_quelle || ''
+    };
+  });
+}
+
+// ============================================
+// LADEN
+// ============================================
+async function loadRecipes() {
+  const url = SHEET_CSV_URL || FALLBACK_CSV;
+  try {
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    allRecipes = csvToRecipes(text);
+    if (!allRecipes.length) throw new Error('Keine Rezepte gefunden');
+    initUI();
+  } catch (err) {
+    console.error(err);
+    document.getElementById('status').innerHTML =
+      'Hoppla, Rezepte konnten nicht geladen werden.<br><span style="font-size:14px;">' + err.message + '</span>';
+  }
+}
+
+function initUI() {
+  document.getElementById('status').style.display = 'none';
+  document.getElementById('header').style.display = 'block';
+  document.getElementById('deckContainer').style.display = 'flex';
+  document.getElementById('actions').style.display = 'flex';
+  buildFilterBar();
+  rebuildDeck();
+}
+
+// ============================================
+// FILTER
+// ============================================
+function buildFilterBar() {
+  const tags = new Set();
+  allRecipes.forEach(r => r.tags.forEach(t => tags.add(t)));
+  const sorted = [...tags].sort();
+  const bar = document.getElementById('filterBar');
+  bar.innerHTML = '';
+  sorted.forEach(t => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = t;
+    chip.onclick = () => {
+      if (activeTags.has(t)) { activeTags.delete(t); chip.classList.remove('active'); }
+      else { activeTags.add(t); chip.classList.add('active'); }
+      rebuildDeck();
+    };
+    bar.appendChild(chip);
+  });
+}
+
+// ============================================
+// SUCHE
+// ============================================
+document.getElementById('searchBtn').onclick = () => {
+  const sb = document.getElementById('searchBar');
+  sb.classList.toggle('open');
+  if (sb.classList.contains('open')) document.getElementById('searchInput').focus();
+  else { searchTerm = ''; document.getElementById('searchInput').value = ''; rebuildDeck(); }
+};
+document.getElementById('searchInput').oninput = (e) => {
+  searchTerm = e.target.value.toLowerCase();
+  rebuildDeck();
+};
+
+// ============================================
+// DECK
+// ============================================
+function filterRecipes() {
+  return allRecipes.filter(r => {
+    if (seenToday.has(r.name)) return false;
+    if (activeTags.size && ![...activeTags].every(t => r.tags.includes(t))) return false;
+    if (searchTerm && !r.name.toLowerCase().includes(searchTerm) &&
+        !r.tags.some(t => t.toLowerCase().includes(searchTerm))) return false;
+    return true;
+  });
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function rebuildDeck() {
+  currentDeck = shuffle(filterRecipes());
+  const deck = document.getElementById('deck');
+  deck.innerHTML = '';
+  if (!currentDeck.length) {
+    deck.innerHTML = `<div class="empty">Alle Rezepte für heute durch ✨<button onclick="resetToday()">Zurücksetzen</button></div>`;
+    return;
+  }
+  // Top 3 als Stack rendern
+  currentDeck.slice(0, 3).reverse().forEach((r, idx, arr) => {
+    const top = idx === arr.length - 1; // letztes = oberstes
+    deck.appendChild(makeCard(r, top));
+  });
+}
+
+function makeCard(recipe, interactive) {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.dataset.name = recipe.name;
+  const imgHTML = recipe.bild
+    ? `<div class="card-image" style="background-image:url('${recipe.bild}')"></div>`
+    : `<div class="card-image">🐰</div>`;
+  card.innerHTML = `
+    ${imgHTML}
+    <div class="card-info">
+      <div class="card-title">${recipe.name}</div>
+      <div class="card-meta">${recipe.zeit ? '⏱ ' + recipe.zeit + ' min' : ''}${recipe.tags.length ? ' · ' + recipe.tags.slice(0,2).join(' · ') : ''}</div>
+    </div>
+    <div class="swipe-label left">Heute nicht</div>
+    <div class="swipe-label right">Lass uns kochen!</div>
+  `;
+  if (interactive) attachSwipe(card, recipe);
+  return card;
+}
+
+// ============================================
+// SWIPE
+// ============================================
+function attachSwipe(card, recipe) {
+  let startX = 0, startY = 0, dx = 0, dy = 0, dragging = false;
+  const labelL = card.querySelector('.swipe-label.left');
+  const labelR = card.querySelector('.swipe-label.right');
+
+  const onStart = (x, y) => { startX = x; startY = y; dragging = true; card.classList.add('dragging'); };
+  const onMove = (x, y) => {
+    if (!dragging) return;
+    dx = x - startX; dy = y - startY;
+    const rot = dx / 20;
+    card.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
+    labelL.style.opacity = dx < -30 ? Math.min(1, -dx/100) : 0;
+    labelR.style.opacity = dx > 30 ? Math.min(1, dx/100) : 0;
+  };
+  const onEnd = () => {
+    if (!dragging) return;
+    dragging = false; card.classList.remove('dragging');
+    if (Math.abs(dx) > 100) {
+      if (dx > 0) openRecipe(recipe, card);
+      else skipRecipe(recipe, card);
+    } else {
+      card.style.transform = '';
+      labelL.style.opacity = 0; labelR.style.opacity = 0;
+    }
+    dx = 0; dy = 0;
+  };
+
+  card.addEventListener('touchstart', e => onStart(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+  card.addEventListener('touchmove', e => onMove(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+  card.addEventListener('touchend', onEnd);
+  card.addEventListener('mousedown', e => { e.preventDefault(); onStart(e.clientX, e.clientY); });
+  window.addEventListener('mousemove', e => { if (dragging) onMove(e.clientX, e.clientY); });
+  window.addEventListener('mouseup', () => { if (dragging) onEnd(); });
+}
+
+function skipRecipe(recipe, card) {
+  if (card) card.classList.add('gone-left');
+  seenToday.add(recipe.name); saveSeen();
+  setTimeout(rebuildDeck, 300);
+}
+function openRecipe(recipe, card) {
+  if (card) card.classList.add('gone-right');
+  seenToday.add(recipe.name); saveSeen();
+  showDetail(recipe);
+  setTimeout(rebuildDeck, 300);
+}
+
+// Action Buttons
+document.getElementById('skipBtn').onclick = () => {
+  const top = document.querySelector('.deck .card:last-child');
+  if (top && currentDeck[0]) skipRecipe(currentDeck[0], top);
+};
+document.getElementById('openBtn').onclick = () => {
+  const top = document.querySelector('.deck .card:last-child');
+  if (top && currentDeck[0]) openRecipe(currentDeck[0], top);
+};
+document.getElementById('resetBtn').onclick = () => {
+  if (confirm('Alle heute schon gesehenen Rezepte wieder einblenden?')) resetToday();
+};
+function resetToday() { seenToday.clear(); saveSeen(); rebuildDeck(); }
+window.resetToday = resetToday;
+
+// ============================================
+// DETAIL
+// ============================================
+function showDetail(recipe) {
+  const body = document.getElementById('detailBody');
+  const imgHTML = recipe.bild
+    ? `<div class="detail-image" style="background-image:url('${recipe.bild}')"><button class="close-btn" id="closeDetail">✕</button></div>`
+    : `<div class="detail-image">🐰<button class="close-btn" id="closeDetail">✕</button></div>`;
+  body.innerHTML = `
+    ${imgHTML}
+    <div class="detail-content">
+      <h2 class="detail-title">${recipe.name}</h2>
+      <div class="detail-meta">
+        ${recipe.zeit ? `<span>⏱ ${recipe.zeit} Minuten</span>` : ''}
+        ${recipe.portionen ? `<span>👥 ${recipe.portionen} Portionen</span>` : ''}
+      </div>
+      ${recipe.tags.length ? `<div class="detail-tags">${recipe.tags.map(t => `<div class="chip">${t}</div>`).join('')}</div>` : ''}
+      ${recipe.zutaten.length ? `
+        <div class="detail-section">
+          <h3>Zutaten</h3>
+          <ul class="ingredients">${recipe.zutaten.map(z => `<li>${z}</li>`).join('')}</ul>
+        </div>` : ''}
+      ${recipe.schritte.length ? `
+        <div class="detail-section">
+          <h3>So geht's</h3>
+          <ol class="steps">${recipe.schritte.map(s => `<li>${s}</li>`).join('')}</ol>
+        </div>` : ''}
+      ${recipe.tipps ? `
+        <div class="detail-section">
+          <h3>Tipp</h3>
+          <div class="tipps">${recipe.tipps}</div>
+        </div>` : ''}
+      ${recipe.original_url ? `
+        <div class="source">
+          Inspiriert von <a href="${recipe.original_url}" target="_blank" rel="noopener">${recipe.original_quelle || 'Original'}</a> →
+        </div>` : ''}
+    </div>
+  `;
+  document.getElementById('detail').classList.add('open');
+  document.getElementById('closeDetail').onclick = () => {
+    document.getElementById('detail').classList.remove('open');
+  };
+}
+
+// ============================================
+// SERVICE WORKER (PWA)
+// ============================================
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(err => console.log('SW error:', err));
+  });
+}
+
+// GO
+loadRecipes();
+</script>
+</body>
+</html>
