@@ -506,7 +506,9 @@
       <p>Die Rezepte leben in einem Google Sheet. Eine neue Zeile ausfüllen, die App lädt sie automatisch beim nächsten Öffnen.</p>
       <p><a class="info-link" id="sheetEditLink" target="_blank" rel="noopener">→ Sheet zum Bearbeiten öffnen</a></p>
 
-      <p style="margin-top:14px;"><strong>Der einfachste Weg:</strong> Kopiert den Prompt unten in ChatGPT oder Claude, fügt euren Rezept-Link oder den Text rein, und ihr bekommt eine fertige Tabelle, die ihr 1:1 ins Sheet eintippt.</p>
+      <p style="margin-top:14px;"><strong>Der einfachste Weg:</strong> Kopiert den Prompt unten in ChatGPT oder Claude, fügt euren Rezept-Link oder den Text dort rein, und ihr bekommt eine fertige Tabellenzeile zurück. Diese Zeile kopiert ihr und fügt sie in Google Sheets in eine leere neue Zeile (linke Zelle anklicken, dann Cmd+V / Strg+V) ein. Die Werte landen automatisch in den richtigen Spalten.</p>
+
+      <p style="margin-top:10px;"><em>Kleiner Hinweis:</em> Manche Seiten (z.B. Chefkoch, Instagram) blockieren KI-Tools. Falls ChatGPT die Seite nicht öffnen kann, einfach den Rezepttext aus der Website kopieren und statt dem Link in den Prompt einfügen.</p>
 
       <div class="prompt-box">
         <button class="copy-btn" id="copyPromptBtn" aria-label="Prompt kopieren">📋 Kopieren</button>
@@ -514,21 +516,22 @@
 
 Quelle: [HIER LINK ODER REZEPT-TEXT EINFÜGEN]
 
-Gib das Ergebnis spaltenweise zurück, damit ich es direkt ins Google Sheet kopieren kann.
-Jede Spalte als eigene Zeile, klar beschriftet:
+Erstelle eine fertige Zeile zum Einfügen in Google Sheets. Format: 10 Werte mit Tabulator getrennt, in EINER Zeile, in einem Code-Block.
 
-name: deutscher Rezeptname
-tags: mit Semikolon getrennt. ZWINGEND genau eines davon: mit-fleisch / mit-fisch / vegetarisch / vegan / dessert. Plus 2-3 optionale wie italienisch, pasta, schnell, suppe, asiatisch, ofengericht.
-zeit_minuten: nur eine Zahl, z.B. 25
-portionen: in der Regel 2
-zutaten: alle Zutaten mit einem senkrechten Strich | getrennt, auf 2 Portionen umgerechnet. Beispiel: 200 g Mehl | 1 Zwiebel | 2 EL Olivenöl | Salz und Pfeffer
-schritte: alle Zubereitungsschritte mit | getrennt, in EIGENEN Worten umformuliert (kein wörtliches Kopieren wegen Copyright)
-bild: leer lassen
-tipps: ein kurzer Tipp falls passend, sonst leer
-original_url: Link zur Quelle
-original_quelle: kurzer Name der Quelle, z.B. "Gaumenfreundin" oder "@instagram_handle"
+Reihenfolge der Werte:
 
-Ausgabe bitte ohne Anführungszeichen, einfach Klartext pro Spalte.</pre>
+1. name: Rezeptname auf Deutsch
+2. tags: mit Semikolon getrennt. ZWINGEND genau eines davon: mit-fleisch / mit-fisch / vegetarisch / vegan / dessert. Plus 2-3 optionale wie italienisch, pasta, schnell, suppe, ofengericht.
+3. zeit_minuten: nur eine Zahl
+4. portionen: in der Regel 2
+5. zutaten: mit | getrennt, auf 2 Portionen umgerechnet. WICHTIG zur Sortierung: Hauptzutaten zuerst (Fleisch / Fisch / Hauptgemüse / Pasta), dann Beilagen, dann Flüssigkeiten und Öle, ZULETZT einfache Würzungen wie Salz und Pfeffer.
+6. schritte: mit | getrennt, in EIGENEN Worten umformuliert (kein wörtliches Übernehmen wegen Copyright).
+7. bild: Dateiname aus dem Rezeptnamen ableiten. Kleingeschrieben, Bindestriche statt Leerzeichen, Umlaute auflösen (ä zu ae, ö zu oe, ü zu ue, ß zu ss), Endung .jpg. Beispiel: spargelauflauf-mit-schinken.jpg
+8. tipps: optional, sonst leer lassen.
+9. original_url: Link zur Quelle, sonst leer.
+10. original_quelle: kurzer Name, z.B. "Gaumenfreundin" oder "@instagram_handle". Sonst leer.
+
+Ausgabe: nur die nackte Zeile in einem Code-Block, Werte mit Tabulator getrennt, KEINE Anführungszeichen, KEINE Markdown-Tabelle.</pre>
       </div>
     </div>
 
