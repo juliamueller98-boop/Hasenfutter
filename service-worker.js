@@ -1,7 +1,10 @@
 // Hasenfutter Service Worker
-// Strategie: Cache-First für App-Shell, Network-First für CSV (damit neue Rezepte sofort durchkommen)
+// Strategie:
+//   - Network-First für HTML/JS/CSS/JSON (damit Updates sofort sichtbar sind)
+//   - Cache-First für Bilder (für Offline und schnelles Laden)
+//   - Network-First für CSV (damit neue Rezepte im Sheet sofort durchkommen)
 
-const CACHE_VERSION = 'hasenfutter-v1';
+const CACHE_VERSION = 'hasenfutter-v2';
 const APP_SHELL = [
   './',
   './index.html',
@@ -28,31 +31,35 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
+  const isImage = /\.(png|jpg|jpeg|webp|gif|svg)$/i.test(url.pathname);
 
-  // Google Sheets CSV: immer frisch laden, Cache als Fallback
-  if (url.hostname.includes('google.com') || url.pathname.endsWith('.csv')) {
+  // Bilder: Cache-First (für Offline und Speed)
+  if (isImage) {
     event.respondWith(
-      fetch(event.request).then(res => {
-        const copy = res.clone();
-        caches.open(CACHE_VERSION).then(c => c.put(event.request, copy));
-        return res;
-      }).catch(() => caches.match(event.request))
+      caches.match(event.request).then(cached => {
+        if (cached) return cached;
+        return fetch(event.request).then(res => {
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE_VERSION).then(c => c.put(event.request, copy));
+          }
+          return res;
+        }).catch(() => cached);
+      })
     );
     return;
   }
 
-  // Bilder und App-Shell: Cache-First
+  // Alles andere (HTML, JS, CSV, Sheets): Network-First mit Cache-Fallback
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request).then(res => {
-        if (res.ok && event.request.method === 'GET') {
-          const copy = res.clone();
-          caches.open(CACHE_VERSION).then(c => c.put(event.request, copy));
-        }
-        return res;
-      }).catch(() => cached);
-    })
+    fetch(event.request).then(res => {
+      if (res.ok) {
+        const copy = res.clone();
+        caches.open(CACHE_VERSION).then(c => c.put(event.request, copy));
+      }
+      return res;
+    }).catch(() => caches.match(event.request))
   );
 });
