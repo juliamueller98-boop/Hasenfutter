@@ -263,7 +263,18 @@
   .detail-section h3 {
     font-family: 'Caveat', cursive; font-weight: 700; font-size: 24px;
     color: var(--brown); margin-bottom: 10px;
+    display: flex; align-items: center; justify-content: space-between;
   }
+  .share-btn {
+    background: var(--cream-soft); color: var(--brown);
+    border: none; border-radius: 999px;
+    padding: 5px 12px; font-size: 12px;
+    font-family: 'Lora', serif; font-weight: 500;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .share-btn:active { transform: scale(0.95); }
+  .share-btn.copied { background: var(--sage); color: white; }
   .ingredients { list-style: none; }
   .ingredients li {
     padding: 7px 0; border-bottom: 1px dashed rgba(92, 58, 46, 0.12);
@@ -962,7 +973,7 @@ function showDetail(recipe) {
       ${recipe.tags.length ? `<div class="detail-tags"><div class="chip">${recipe.kategorie}</div>${recipe.tags.filter(t => !['mit-fleisch','mit-fisch','vegetarisch','vegan','dessert'].includes(t)).map(t => `<div class="chip">${t}</div>`).join('')}</div>` : ''}
       ${recipe.zutaten.length ? `
         <div class="detail-section">
-          <h3>Zutaten</h3>
+          <h3>Zutaten<button class="share-btn" id="shareIngredientsBtn">📤 Teilen</button></h3>
           <ul class="ingredients" id="ingredientsList">${renderIngredients(recipe, origPortions)}</ul>
         </div>` : ''}
       ${recipe.schritte.length ? `
@@ -992,6 +1003,40 @@ function showDetail(recipe) {
         if (list) list.innerHTML = renderIngredients(recipe, p);
       };
     });
+  }
+  // Share-Button für Zutaten
+  const shareBtn = document.getElementById('shareIngredientsBtn');
+  if (shareBtn) {
+    shareBtn.onclick = async () => {
+      const activeP = sw ? parseInt(sw.querySelector('button.active').dataset.p) : origPortions;
+      const orig = parseInt(recipe.portionen) || 2;
+      const factor = activeP / orig;
+      const list = recipe.zutaten.map(z => '• ' + scaleIngredient(z, factor)).join('\n');
+      const text = `${recipe.name} (${activeP} Portionen)\n\n${list}`;
+      // Web Share API versuchen, sonst Clipboard
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: recipe.name, text: text });
+          return;
+        } catch (e) {
+          if (e.name === 'AbortError') return; // User hat abgebrochen
+          // Sonst Fallback
+        }
+      }
+      // Fallback: Clipboard
+      try {
+        await navigator.clipboard.writeText(text);
+        const origText = shareBtn.innerHTML;
+        shareBtn.innerHTML = '✓ Kopiert';
+        shareBtn.classList.add('copied');
+        setTimeout(() => {
+          shareBtn.innerHTML = origText;
+          shareBtn.classList.remove('copied');
+        }, 2000);
+      } catch (e) {
+        alert('Teilen nicht möglich. Bitte manuell kopieren.');
+      }
+    };
   }
   document.getElementById('detail').classList.add('open');
   document.getElementById('closeDetail').onclick = () => {
