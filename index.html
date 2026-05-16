@@ -12,6 +12,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="images/icon-192.png">
 <link rel="icon" href="images/icon-192.png">
+<link rel="preload" href="images/cover.jpg" as="image" fetchpriority="high">
 <title>Hasenfutter</title>
 <!-- Bunny Fonts: DSGVO-konform, EU-hosted (Slowenien), kein Tracking. Drop-in für Google Fonts. -->
 <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
@@ -458,6 +459,7 @@
 <!-- SPLASH -->
 <div class="splash" id="splash">
   <img class="splash-image" id="splashImage" src="images/cover.jpg" alt="Hasenfutter"
+       fetchpriority="high" decoding="async"
        onerror="this.style.display='none'; document.getElementById('splashFallback').style.display='flex';">
   <div class="splash-fallback" id="splashFallback" style="display:none;">Hasenfutter 🐰</div>
   <div class="splash-prompt">Tippen zum Starten</div>
